@@ -21,6 +21,8 @@ public:
     ~Buffer();
     
     void loadFile(std::string const& filename);
+
+    ALint getProperty(ALenum param) const;
 };
 
 SSS_AUDIO_END;

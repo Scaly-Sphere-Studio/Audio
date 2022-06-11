@@ -60,6 +60,10 @@ void Device::updateDevices()
 
 void Device::createSource(uint32_t id)
 {
+    if (_sources.size() >= 256) {
+        LOG_FUNC_WRN("Can't create more than 256 sources.");
+        return;
+    }
     if (_sources.count(id) == 0) {
         _sources.try_emplace(id);
         _sources.at(id).reset(new Source());

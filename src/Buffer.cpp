@@ -2,6 +2,27 @@
 
 SSS_AUDIO_BEGIN;
 
+INTERNAL_BEGIN;
+std::string getALErrorString(ALenum error)
+{
+    switch (error)
+    {
+    case AL_INVALID_NAME:
+        return "AL_INVALID_NAME: a bad name (ID) was passed to an OpenAL function";
+    case AL_INVALID_ENUM:
+        return "AL_INVALID_ENUM: an invalid enum value was passed to an OpenAL function";
+    case AL_INVALID_VALUE:
+        return "AL_INVALID_VALUE: an invalid value was passed to an OpenAL function";
+    case AL_INVALID_OPERATION:
+        return "AL_INVALID_OPERATION: the requested operation is not valid";
+    case AL_OUT_OF_MEMORY:
+        return "AL_OUT_OF_MEMORY: the requested operation resulted in OpenAL running out of memory";
+    default:
+        return CONTEXT_MSG("UNKNOWN AL ERROR", error);
+    }
+}
+INTERNAL_END;
+
 Buffer::Buffer()
     : _id([]() {
         ALuint buffer;
@@ -61,5 +82,12 @@ void Buffer::loadFile(const std::string& filename) try
     }
 }
 CATCH_AND_LOG_METHOD_EXC;
+
+ALint Buffer::getProperty(ALenum param) const
+{
+    ALint ret;
+    alGetBufferi(_id, param, &ret);
+    return ret;;
+}
 
 SSS_AUDIO_END;
