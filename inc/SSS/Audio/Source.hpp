@@ -16,6 +16,7 @@ private:
     ALuint const _id;
 
     Source();
+    Source(ALuint id) noexcept;
 public:
     ~Source();
 

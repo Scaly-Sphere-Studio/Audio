@@ -17,8 +17,6 @@ public:
 
     void updateDevices();
 
-    void createSource(uint32_t id);
-    void removeSource(uint32_t id);
     Source::Ptr const& getSource(uint32_t id) const noexcept;
 
     void createBuffer(uint32_t id);
@@ -30,7 +28,7 @@ private:
     ALCdevice* _device;
     ALCcontext* _context;
 
-    std::map<uint32_t, Source::Ptr> _sources;
+    std::array<Source::Ptr, 256> _sources;
     std::map<uint32_t, Buffer::Ptr> _buffers;
 };
 

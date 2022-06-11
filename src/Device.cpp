@@ -17,12 +17,24 @@ Device::Device() try
         SSS::throw_exc(_internal::getALErrorString(alcGetError(_device)));
     }
     LOG_MSG("OpenAL device & context created");
+    
+    std::array<ALuint, 256> ids;
+    alGenSources(ids.size(), &ids[0]);
+    ALenum err = alGetError();
+    if (err) {
+        SSS::throw_exc("Couldn't generate OpenAL sources: "
+            + _internal::getALErrorString(err));
+    }
+    
+    for (size_t i = 0; i < _sources.size(); ++i) {
+        _sources.at(i).reset(new Source(ids.at(i)));
+    }
 }
 CATCH_AND_RETHROW_METHOD_EXC;
 
 Device::~Device()
 {
-    _sources.clear();
+    std::fill(_sources.begin(), _sources.end(), nullptr);
     _buffers.clear();
     // Unbind context
     alcMakeContextCurrent(NULL);
@@ -58,29 +70,10 @@ void Device::updateDevices()
         _all_devices.emplace_back(nullptr);
 }
 
-void Device::createSource(uint32_t id)
-{
-    if (_sources.size() >= 256) {
-        LOG_FUNC_WRN("Can't create more than 256 sources.");
-        return;
-    }
-    if (_sources.count(id) == 0) {
-        _sources.try_emplace(id);
-        _sources.at(id).reset(new Source());
-    }
-}
-
-void Device::removeSource(uint32_t id)
-{
-    if (_sources.count(id) != 0) {
-        _sources.erase(id);
-    }
-}
-
 Source::Ptr const& Device::getSource(uint32_t id) const noexcept
 {
     static Source::Ptr n;
-    if (_sources.count(id) != 0) {
+    if (id < _sources.size()) {
         return _sources.at(id);
     }
     return n;

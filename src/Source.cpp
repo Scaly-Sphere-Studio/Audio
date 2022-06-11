@@ -17,6 +17,11 @@ Source::Source()
 {
 }
 
+Source::Source(ALuint id) noexcept
+    : _id(id)
+{
+}
+
 Source::~Source()
 {
     if (_id != 0) {

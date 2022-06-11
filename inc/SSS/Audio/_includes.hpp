@@ -8,6 +8,7 @@
 #include <sndfile.h>
 
 #include <map>
+#include <array>
 
 /** Declares the SSS::Audio namespace.
  *  Further code will be nested in the SSS::Audio namespace.\n
