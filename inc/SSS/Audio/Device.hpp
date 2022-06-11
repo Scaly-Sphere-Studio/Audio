@@ -5,31 +5,58 @@
 
 SSS_AUDIO_BEGIN;
 
+void createBuffer(uint32_t id) noexcept;
+void createSource(uint32_t id) noexcept;
+void removeBuffer(uint32_t id) noexcept;
+void removeSource(uint32_t id) noexcept;
+Buffer::Map const& getBuffers() noexcept;
+Source::Array const& getSources() noexcept;
+
+INTERNAL_BEGIN;
 class Device final {
-public:
-    using Ptr = std::unique_ptr<Device>;
+    friend void ::SSS::Audio::createBuffer(uint32_t) noexcept;
+    friend void ::SSS::Audio::createSource(uint32_t) noexcept;
+    friend void ::SSS::Audio::removeBuffer(uint32_t) noexcept;
+    friend void ::SSS::Audio::removeSource(uint32_t) noexcept;
+    friend Buffer::Map const& ::SSS::Audio::getBuffers() noexcept;
+    friend Source::Array const& ::SSS::Audio::getSources() noexcept;
+
 private:
     Device();
 public:
     ~Device();
-
-    static Ptr const& get();
-
-    void updateDevices();
-
-    Source::Ptr const& getSource(uint32_t id) const noexcept;
-
-    void createBuffer(uint32_t id);
-    void removeBuffer(uint32_t id);
-    Buffer::Ptr const& getBuffer(uint32_t id) const noexcept;
+    // Unique ptr type, returned by get()
+    using Ptr = std::unique_ptr<Device>;
 
 private:
+    // Returns singleton
+    static Ptr const& get();
+
+    // All devices listed by OpenAL
     std::vector<std::string> _all_devices;
+    // Current OpenAL device
     ALCdevice* _device;
+    // Current OpenAL context
     ALCcontext* _context;
 
-    std::array<Source::Ptr, 256> _sources;
-    std::map<uint32_t, Buffer::Ptr> _buffers;
+    // Fixed array of Sources
+    Source::Array _sources;
+    // ID Map of Buffers
+    Buffer::Map _buffers;
+
+    // Updates _all_devices
+    void updateDevices();
+
+    // Creates and stores a Buffer in _buffers at given ID
+    void createBuffer(uint32_t id);
+    // Removes the Buffer in _buffers at given ID
+    void removeBuffer(uint32_t id);
+
+    // Creates and stores a Source in _sources at given ID
+    void createSource(uint32_t id);
+    // Removes the Source in _sources at given ID
+    void removeSource(uint32_t id);
 };
+INTERNAL_END;
 
 SSS_AUDIO_END;

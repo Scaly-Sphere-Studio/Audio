@@ -1,6 +1,7 @@
 #include "SSS/Audio/Device.hpp"
 
 SSS_AUDIO_BEGIN;
+INTERNAL_BEGIN;
 
 Device::Device() try
 {
@@ -17,18 +18,6 @@ Device::Device() try
         SSS::throw_exc(_internal::getALErrorString(alcGetError(_device)));
     }
     LOG_MSG("OpenAL device & context created");
-    
-    std::array<ALuint, 256> ids;
-    alGenSources(ids.size(), &ids[0]);
-    ALenum err = alGetError();
-    if (err) {
-        SSS::throw_exc("Couldn't generate OpenAL sources: "
-            + _internal::getALErrorString(err));
-    }
-    
-    for (size_t i = 0; i < _sources.size(); ++i) {
-        _sources.at(i).reset(new Source(ids.at(i)));
-    }
 }
 CATCH_AND_RETHROW_METHOD_EXC;
 
@@ -70,15 +59,6 @@ void Device::updateDevices()
         _all_devices.emplace_back(nullptr);
 }
 
-Source::Ptr const& Device::getSource(uint32_t id) const noexcept
-{
-    static Source::Ptr n;
-    if (id < _sources.size()) {
-        return _sources.at(id);
-    }
-    return n;
-}
-
 void Device::createBuffer(uint32_t id)
 {
     if (_buffers.count(id) == 0) {
@@ -94,13 +74,57 @@ void Device::removeBuffer(uint32_t id)
     }
 }
 
-Buffer::Ptr const& Device::getBuffer(uint32_t id) const noexcept
+void Device::createSource(uint32_t id)
 {
-    static Buffer::Ptr n;
-    if (_buffers.count(id) != 0) {
-        return _buffers.at(id);
+    if (id >= _sources.size()) {
+        SSS::throw_exc("Can't create more than 256 sources.");
     }
-    return n;
+    if (!_sources.at(id)) {
+        _sources.at(id).reset(new Source());
+    }
+}
+
+void Device::removeSource(uint32_t id)
+{
+    if (!_sources.at(id)) {
+        _sources.at(id).reset();
+    }
+}
+
+INTERNAL_END;
+
+void createBuffer(uint32_t id) noexcept try
+{
+    _internal::Device::get()->createBuffer(id);
+}
+CATCH_AND_LOG_FUNC_EXC;
+
+void createSource(uint32_t id) noexcept try
+{
+    _internal::Device::get()->createSource(id);
+}
+CATCH_AND_LOG_FUNC_EXC;
+
+void removeBuffer(uint32_t id) noexcept try
+{
+    _internal::Device::get()->removeBuffer(id);
+}
+CATCH_AND_LOG_FUNC_EXC;
+
+void removeSource(uint32_t id) noexcept try
+{
+    _internal::Device::get()->removeSource(id);
+}
+CATCH_AND_LOG_FUNC_EXC;
+
+Buffer::Map const& getBuffers() noexcept
+{
+    return _internal::Device::get()->_buffers;
+}
+
+Source::Array const& getSources() noexcept
+{
+    return _internal::Device::get()->_sources;
 }
 
 SSS_AUDIO_END;

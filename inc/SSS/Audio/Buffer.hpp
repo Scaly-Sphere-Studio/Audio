@@ -4,14 +4,18 @@
 
 SSS_AUDIO_BEGIN;
 
-class Device; class Source; // Pre-declaration
+INTERNAL_BEGIN
+class Device; // Pre-declaration
+INTERNAL_END
+class Source; // Pre-declaration
 
 class Buffer final {
-    friend Device;
+    friend _internal::Device;
     friend Source;
 
 public:
     using Ptr = std::unique_ptr<Buffer>;
+    using Map = std::map<uint32_t, Ptr>;
 
 private:
     ALuint const _id;

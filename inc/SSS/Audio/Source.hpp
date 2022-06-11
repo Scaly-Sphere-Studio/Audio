@@ -4,19 +4,21 @@
 
 SSS_AUDIO_BEGIN;
 
+INTERNAL_BEGIN
 class Device; // Pre-declaration
+INTERNAL_END
 
 class Source final {
-    friend Device;
+    friend _internal::Device;
 
 public:
     using Ptr = std::unique_ptr<Source>;
+    using Array = std::array<Ptr, 256U>;
 
 private:
     ALuint const _id;
 
     Source();
-    Source(ALuint id) noexcept;
 public:
     ~Source();
 

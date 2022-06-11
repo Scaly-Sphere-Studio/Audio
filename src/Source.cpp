@@ -17,11 +17,6 @@ Source::Source()
 {
 }
 
-Source::Source(ALuint id) noexcept
-    : _id(id)
-{
-}
-
 Source::~Source()
 {
     if (_id != 0) {
@@ -47,7 +42,7 @@ void Source::useBuffer(uint32_t id)
         was_playing = isPlaying();
         stop();
     }
-    Buffer::Ptr const& buffer = Device::get()->getBuffer(id);
+    Buffer::Ptr const& buffer = getBuffers().at(id);
     if (buffer) {
         alSourcei(_id, AL_BUFFER, buffer->_id);
         if (was_playing) {
@@ -88,7 +83,7 @@ void Source::queueBuffers(std::vector<uint32_t> ids)
     }
     // Retrieve OpenAL ids
     for (uint32_t const& id : ids) {
-        Buffer::Ptr const& buffer = Device::get()->getBuffer(id);
+        Buffer::Ptr const& buffer = getBuffers().at(id);
         if (buffer) {
             buffer_ids.push_back(buffer->_id);
         }
