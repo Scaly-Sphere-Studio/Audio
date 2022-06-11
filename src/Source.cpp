@@ -54,28 +54,48 @@ void Source::useBuffer(uint32_t id)
 void Source::queueBuffers(std::vector<uint32_t> ids)
 {
     RETURN_IF_NULL;
+    // OpenAL IDs (to be filled)
+    std::vector<ALuint> buffer_ids;
+    buffer_ids.reserve(ids.size() + 1);
     // Ensure source has no attached buffer if static
-    bool was_playing = false;
+    bool static_was_playing = false; // Whether the source was playing while static
+    int static_bytes_played = 0;     // Number of bytes played by static source
     if (_getType() == AL_STATIC) {
+        ALint const state = _getState();
         // Stop if needed
-        if (!isStopped()) {
-            was_playing = isPlaying();
+        if (state == AL_PLAYING || state == AL_PAUSED) {
+            static_was_playing = state == AL_PLAYING;
+            static_bytes_played = getPropertyInt(AL_BYTE_OFFSET);
             stop();
         }
-        // Detach buffer
-        alSourcei(_id, AL_BUFFER, 0);
+        // Check if buffer was attached
+        ALint const actual_buffer = getPropertyInt(AL_BUFFER);
+        if (actual_buffer != 0) {
+            // Detach buffer
+            alSourcei(_id, AL_BUFFER, 0);
+            // Add previous buffer to queue
+            buffer_ids.push_back(actual_buffer);
+            if (state == AL_STOPPED) {
+                // Skip previous buffer if already played (useful in loops)
+                alGetBufferi(actual_buffer, AL_SIZE, &static_bytes_played);
+            }
+        }
     }
-    std::vector<ALuint> buffer_ids;
-    buffer_ids.reserve(ids.size());
+    // Retrieve OpenAL ids
     for (uint32_t const& id : ids) {
         Buffer::Ptr const& buffer = Device::get()->getBuffer(id);
         if (buffer) {
             buffer_ids.push_back(buffer->_id);
         }
     }
+    // Queue buffers
     if (!buffer_ids.empty()) {
         alSourceQueueBuffers(_id, buffer_ids.size(), &buffer_ids[0]);
-        if (was_playing) {
+        // Skip played bytes and resume playing if needed
+        if (static_bytes_played > 0) {
+            setPropertyInt(AL_BYTE_OFFSET, static_bytes_played);
+        }
+        if (static_was_playing) {
             play();
         }
     }
