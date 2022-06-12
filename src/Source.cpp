@@ -146,6 +146,26 @@ bool Source::isStopped() const noexcept
     return status == AL_STOPPED || status == AL_INITIAL;
 }
 
+void Source::setVolume(int percentage)
+{
+    setPropertyFloat(AL_GAIN, static_cast<float>(percentage) / 100.f);
+}
+
+int Source::getVolume() const
+{
+    return static_cast<int>(getPropertyFloat(AL_GAIN) * 100.f);
+}
+
+void Source::setLooping(bool enable)
+{
+    setPropertyInt(AL_LOOPING, static_cast<int>(enable));
+}
+
+bool Source::isLooping() const
+{
+    return static_cast<bool>(getPropertyInt(AL_LOOPING));
+}
+
 ALint Source::getPropertyInt(ALenum param) const
 {
     RETURN_IF_NULL 0;

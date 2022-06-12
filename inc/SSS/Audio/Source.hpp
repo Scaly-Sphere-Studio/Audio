@@ -39,6 +39,12 @@ public:
     bool isPaused() const noexcept;
     bool isStopped() const noexcept;
 
+    void setVolume(int percentage);
+    int getVolume() const;
+
+    void setLooping(bool enable);
+    bool isLooping() const;
+
     ALint getPropertyInt(ALenum param) const;
     void setPropertyInt(ALenum param, ALint value);
 

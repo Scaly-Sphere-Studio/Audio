@@ -86,7 +86,7 @@ void Device::createSource(uint32_t id)
 
 void Device::removeSource(uint32_t id)
 {
-    if (!_sources.at(id)) {
+    if (_sources.at(id)) {
         _sources.at(id).reset();
     }
 }
