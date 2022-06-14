@@ -7,9 +7,11 @@ SSS_AUDIO_BEGIN;
 INTERNAL_BEGIN
 class Device; // Pre-declaration
 INTERNAL_END
+class Buffer;
 
 class Source final {
     friend _internal::Device;
+    friend Buffer;
 
 public:
     using Ptr = std::unique_ptr<Source>;
@@ -24,6 +26,8 @@ public:
 
 private:
     ALint _getType() const noexcept;
+    std::vector<ALuint> _buffer_ids;
+    void _removeBuffer(ALuint id);
 public:
     void useBuffer(uint32_t id);
     void queueBuffers(std::vector<uint32_t> ids);

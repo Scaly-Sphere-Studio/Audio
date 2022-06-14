@@ -21,6 +21,8 @@ private:
     ALuint const _id;
     
     Buffer();
+
+    void _removeFromSources() noexcept;
 public:
     ~Buffer();
     

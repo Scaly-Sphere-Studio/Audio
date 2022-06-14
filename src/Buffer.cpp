@@ -1,4 +1,5 @@
 #include "SSS/Audio/Buffer.hpp"
+#include "SSS/Audio/Device.hpp"
 
 SSS_AUDIO_BEGIN;
 
@@ -35,9 +36,18 @@ Buffer::Buffer()
 {
 }
 
+void Buffer::_removeFromSources() noexcept try
+{
+    for (Source::Ptr const& source : getSources()) {
+        source->_removeBuffer(_id);
+    }
+}
+CATCH_AND_LOG_FUNC_EXC;
+
 Buffer::~Buffer()
 {
     if (_id != 0) {
+        _removeFromSources();
         alDeleteBuffers(1, &_id);
     }
 }
@@ -51,12 +61,13 @@ void Buffer::loadFile(const std::string& filename) try
         SSS::throw_exc("Couldn't open " + filename);
     }
     // Extract sample size & rate
-    ALsizei sample_nb = static_cast<ALsizei>(file_infos.channels * file_infos.frames);
-    ALsizei sample_rate = static_cast<ALsizei>(file_infos.samplerate);
+    ALsizei const sample_nb = static_cast<ALsizei>(file_infos.channels * file_infos.frames);
+    ALsizei const sample_hz = static_cast<ALsizei>(file_infos.samplerate);
     // Read by chunks of 16 bits
     std::vector<short> samples(sample_nb);
-    if (sf_read_short(file, &samples[0], sample_nb) < sample_nb) {
-        SSS::throw_exc("Error reading " + filename);
+    sf_count_t const read_nb = sf_readf_short(file, &samples[0], sample_nb);
+    if (read_nb < sample_nb) {
+        //SSS::throw_exc("Error reading " + filename);
     }
     // Close audio file
     sf_close(file);
@@ -74,8 +85,11 @@ void Buffer::loadFile(const std::string& filename) try
         SSS::throw_exc("Unsupported file format");
     }
 
+    // Ensure buffer isn't attached to any source
+    _removeFromSources();
+
     // Fill buffer
-    alBufferData(_id, format, &samples[0], sample_nb * sizeof(short), sample_rate);
+    alBufferData(_id, format, &samples[0], sample_nb * sizeof(short), sample_hz);
     ALenum err = alGetError();
     if (err != AL_NO_ERROR) {
         SSS::throw_exc("Error filling buffer: " + _internal::getALErrorString(err));
