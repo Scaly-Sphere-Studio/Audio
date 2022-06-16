@@ -48,20 +48,11 @@ void Source::_removeBuffer(ALuint id)
     if (_buffer_ids.size() != size_before) {
         bool const was_playing = isPlaying();
         stop();
-        if (_getType() == AL_STATIC) {
-            alSourcei(_id, AL_BUFFER, 0);
-        }
-        else {
-            bool const was_looping = isLooping();
-            setLooping(false);
-            std::vector<ALuint> tmp(size_before);
-            alSourceUnqueueBuffers(_id, size_before, &tmp[0]);
-            setLooping(was_looping);
-            if (!_buffer_ids.empty()) {
-                alSourceQueueBuffers(_id, _buffer_ids.size(), &_buffer_ids[0]);
-                if (was_playing) {
-                    play();
-                }
+        alSourcei(_id, AL_BUFFER, 0);
+        if (!_buffer_ids.empty()) {
+            alSourceQueueBuffers(_id, _buffer_ids.size(), &_buffer_ids[0]);
+            if (was_playing) {
+                play();
             }
         }
     }
@@ -129,8 +120,10 @@ void Source::queueBuffers(std::vector<uint32_t> ids)
         }
     }
     // Retrieve OpenAL ids
+    Buffer::Map const& buffers = getBuffers();
     for (uint32_t const& id : ids) {
-        Buffer::Ptr const& buffer = getBuffers().at(id);
+        if (buffers.count(id) == 0) continue;
+        Buffer::Ptr const& buffer = buffers.at(id);
         if (buffer) {
             openal_ids.push_back(buffer->_id);
             _buffer_ids.push_back(buffer->_id);
@@ -147,6 +140,33 @@ void Source::queueBuffers(std::vector<uint32_t> ids)
             play();
         }
     }
+}
+
+void Source::detachBuffers()
+{
+    stop();
+    alSourcei(_id, AL_BUFFER, 0);
+    _buffer_ids.clear();
+}
+
+std::vector<uint32_t> Source::getBufferIDs() const noexcept try
+{
+    std::vector<uint32_t> ids;
+    ids.reserve(_buffer_ids.size());
+    Buffer::Map const& buffers = getBuffers();
+    for (ALuint const& id : _buffer_ids) {
+        for (auto const& pair : buffers) {
+            if (pair.second->_id == id) {
+                ids.push_back(pair.first);
+                break;
+            }
+        }
+    }
+    return ids;
+}
+catch (std::exception const& e) {
+    LOG_FUNC_ERR(e.what());
+    return std::vector<uint32_t>();
 }
 
 void Source::play()

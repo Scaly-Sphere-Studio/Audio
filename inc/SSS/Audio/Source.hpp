@@ -31,6 +31,8 @@ private:
 public:
     void useBuffer(uint32_t id);
     void queueBuffers(std::vector<uint32_t> ids);
+    void detachBuffers();
+    std::vector<uint32_t> getBufferIDs() const noexcept;
 
     void play();
     void pause();
