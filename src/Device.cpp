@@ -59,21 +59,6 @@ void Device::updateDevices()
         _all_devices.emplace_back(nullptr);
 }
 
-void Device::createBuffer(uint32_t id)
-{
-    if (_buffers.count(id) == 0) {
-        _buffers.try_emplace(id);
-        _buffers.at(id).reset(new Buffer());
-    }
-}
-
-void Device::removeBuffer(uint32_t id)
-{
-    if (_buffers.count(id) != 0) {
-        _buffers.erase(id);
-    }
-}
-
 void Device::createSource(uint32_t id)
 {
     if (id >= _sources.size()) {
@@ -91,11 +76,53 @@ void Device::removeSource(uint32_t id)
     }
 }
 
+void Device::createBuffer(uint32_t id)
+{
+    if (_buffers.count(id) == 0) {
+        _buffers.try_emplace(id);
+        _buffers.at(id).reset(new Buffer());
+    }
+}
+
+void Device::removeBuffer(uint32_t id)
+{
+    if (_buffers.count(id) != 0) {
+        _buffers.erase(id);
+    }
+}
+
 INTERNAL_END;
 
-void createBuffer(uint32_t id) noexcept try
+Source::Array const& getSources() noexcept try
 {
-    _internal::Device::get()->createBuffer(id);
+    return _internal::Device::get()->_sources;
+}
+catch (std::exception const& e) {
+    static Source::Array arr;
+    LOG_FUNC_ERR(e.what());
+    return arr;
+}
+
+Buffer::Map const& getBuffers() noexcept try
+{
+    return _internal::Device::get()->_buffers;
+}
+catch (std::exception const& e) {
+    static Buffer::Map map;
+    LOG_FUNC_ERR(e.what());
+    return map;
+}
+
+void cleanSources() noexcept try
+{
+    Source::Array& sources = _internal::Device::get()->_sources;
+    std::fill(sources.begin(), sources.end(), nullptr);
+}
+CATCH_AND_LOG_FUNC_EXC;
+
+void cleanBuffers() noexcept try
+{
+    _internal::Device::get()->_buffers.clear();
 }
 CATCH_AND_LOG_FUNC_EXC;
 
@@ -105,9 +132,9 @@ void createSource(uint32_t id) noexcept try
 }
 CATCH_AND_LOG_FUNC_EXC;
 
-void removeBuffer(uint32_t id) noexcept try
+void createBuffer(uint32_t id) noexcept try
 {
-    _internal::Device::get()->removeBuffer(id);
+    _internal::Device::get()->createBuffer(id);
 }
 CATCH_AND_LOG_FUNC_EXC;
 
@@ -117,14 +144,27 @@ void removeSource(uint32_t id) noexcept try
 }
 CATCH_AND_LOG_FUNC_EXC;
 
-Buffer::Map const& getBuffers() noexcept
+void removeBuffer(uint32_t id) noexcept try
 {
-    return _internal::Device::get()->_buffers;
+    _internal::Device::get()->removeBuffer(id);
 }
+CATCH_AND_LOG_FUNC_EXC;
 
-Source::Array const& getSources() noexcept
+void setMainVolume(int volume) noexcept try
 {
-    return _internal::Device::get()->_sources;
+    alListenerf(AL_GAIN, static_cast<float>(volume) / 100.f);
+}
+CATCH_AND_LOG_FUNC_EXC;
+
+int getMainVolume() noexcept try
+{
+    ALfloat gain;
+    alGetListenerf(AL_GAIN, &gain);
+    return static_cast<int>(gain * 100.f);
+}
+catch (std::exception const& e) {
+    LOG_FUNC_ERR(e.what());
+    return 0;
 }
 
 SSS_AUDIO_END;
