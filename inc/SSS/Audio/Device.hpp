@@ -19,26 +19,16 @@ int getMainVolume() noexcept;
 
 INTERNAL_BEGIN;
 class Device final {
-    friend Source::Array const& ::SSS::Audio::getSources() noexcept;
-    friend Buffer::Map const& ::SSS::Audio::getBuffers() noexcept;
-    friend void ::SSS::Audio::cleanSources() noexcept;
-    friend void ::SSS::Audio::cleanBuffers() noexcept;
-    friend void ::SSS::Audio::createSource(uint32_t) noexcept;
-    friend void ::SSS::Audio::createBuffer(uint32_t) noexcept;
-    friend void ::SSS::Audio::removeSource(uint32_t) noexcept;
-    friend void ::SSS::Audio::removeBuffer(uint32_t) noexcept;
-
 private:
     Device();
 public:
     ~Device();
     // Unique ptr type, returned by get()
     using Ptr = std::unique_ptr<Device>;
-
-private:
     // Returns singleton
     static Ptr const& get();
 
+private:
     // All devices listed by OpenAL
     std::vector<std::string> _all_devices;
     // Current OpenAL device
@@ -51,8 +41,15 @@ private:
     // ID Map of Buffers
     Buffer::Map _buffers;
 
+public:
     // Updates _all_devices
     void updateDevices();
+
+    Source::Array const& getSources() const noexcept;
+    Buffer::Map const& getBuffers() const noexcept;
+
+    void cleanSources() noexcept;
+    void cleanBuffers() noexcept;
 
     // Creates and stores a Source in _sources at given ID
     void createSource(uint32_t id);

@@ -23,8 +23,9 @@ CATCH_AND_RETHROW_METHOD_EXC;
 
 Device::~Device()
 {
-    std::fill(_sources.begin(), _sources.end(), nullptr);
-    _buffers.clear();
+    // Free resources
+    cleanSources();
+    cleanBuffers();
     // Unbind context
     alcMakeContextCurrent(NULL);
     // Free context & device
@@ -57,6 +58,26 @@ void Device::updateDevices()
     }
     if (_all_devices.empty())
         _all_devices.emplace_back(nullptr);
+}
+
+Source::Array const& Device::getSources() const noexcept
+{
+    return _sources;
+}
+
+Buffer::Map const& Device::getBuffers() const noexcept
+{
+    return _buffers;
+}
+
+void Device::cleanSources() noexcept
+{
+    std::fill(_sources.begin(), _sources.end(), nullptr);
+}
+
+void Device::cleanBuffers() noexcept
+{
+    _buffers.clear();
 }
 
 void Device::createSource(uint32_t id)
@@ -95,7 +116,7 @@ INTERNAL_END;
 
 Source::Array const& getSources() noexcept try
 {
-    return _internal::Device::get()->_sources;
+    return _internal::Device::get()->getSources();
 }
 catch (std::exception const& e) {
     static Source::Array arr;
@@ -105,7 +126,7 @@ catch (std::exception const& e) {
 
 Buffer::Map const& getBuffers() noexcept try
 {
-    return _internal::Device::get()->_buffers;
+    return _internal::Device::get()->getBuffers();
 }
 catch (std::exception const& e) {
     static Buffer::Map map;
@@ -115,14 +136,13 @@ catch (std::exception const& e) {
 
 void cleanSources() noexcept try
 {
-    Source::Array& sources = _internal::Device::get()->_sources;
-    std::fill(sources.begin(), sources.end(), nullptr);
+    _internal::Device::get()->cleanSources();
 }
 CATCH_AND_LOG_FUNC_EXC;
 
 void cleanBuffers() noexcept try
 {
-    _internal::Device::get()->_buffers.clear();
+    _internal::Device::get()->cleanBuffers();
 }
 CATCH_AND_LOG_FUNC_EXC;
 
