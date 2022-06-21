@@ -7,7 +7,7 @@ SSS_AUDIO_BEGIN;
 INTERNAL_BEGIN;
 class Device final {
 private:
-    void _init(char const* name);
+    void _init(std::string const& name = "");
     Device();
 public:
     ~Device();
@@ -16,10 +16,10 @@ public:
     // Returns singleton
     static Ptr const& get();
 
-    using List = std::vector<std::string>;
+    using Map = std::unordered_map<std::string, std::string>;
 private:
     // All devices listed by OpenAL
-    List _all_devices;
+    Map _all_devices;
     // Current device name
     std::string _current_device;
     // Current OpenAL device
@@ -35,7 +35,7 @@ private:
 public:
     // Updates _all_devices
     void updateDevices();
-    List const& getList() const noexcept;
+    Map const& getMap() const noexcept;
     void select(std::string const& name);
     std::string getCurrent() const noexcept;
 

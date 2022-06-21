@@ -3,14 +3,20 @@
 SSS_AUDIO_BEGIN;
 INTERNAL_BEGIN;
 
-void Device::_init(char const* name)
+void Device::_init(std::string const& name)
 {
-    _device = alcOpenDevice(name);
+    char const* id;
+    if (_all_devices.count(name) != 0) {
+        id = _all_devices.at(name).c_str();
+        _current_device = name;
+    }
+    else {
+        id = _all_devices.cbegin()->second.c_str();
+        _current_device = _all_devices.cbegin()->first;
+    }
+    _device = alcOpenDevice(id);
     if (_device == nullptr) {
         SSS::throw_exc(_internal::getALErrorString(alcGetError(_device)));
-    }
-    if (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") == ALC_TRUE) {
-        _current_device = alcGetString(_device, ALC_ALL_DEVICES_SPECIFIER);
     }
     _context = alcCreateContext(_device, nullptr);
     if (_context == nullptr) {
@@ -24,7 +30,7 @@ void Device::_init(char const* name)
 Device::Device() try
 {
     updateDevices();
-    _init(0);
+    _init();
     LOG_MSG("OpenAL device & context created");
 }
 CATCH_AND_RETHROW_METHOD_EXC;
@@ -54,21 +60,24 @@ void Device::updateDevices()
     if (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") == ALC_TRUE) {
         // Retrieve devices
         ALchar const* devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
-        const ALCchar* device = devices, * next = devices + 1;
-        size_t len = 0;
+        ALCchar const* device = devices, * next = devices + 1;
         // Add each device one by one
         while (device && *device != '\0' && next && *next != '\0') {
-            _all_devices.emplace_back(device);
-            len = strlen(device);
+            std::string const needle("OpenAL Soft on ");
+            std::string key = device;
+            size_t const len = key.size();
+            size_t const id = key.find(needle);
+            if (id + needle.size() < key.size()) {
+                key = key.substr(id + needle.size());
+            }
+            _all_devices[key] = device;
             device += (len + 1);
             next += (len + 2);
         }
     }
-    if (_all_devices.empty())
-        _all_devices.emplace_back(nullptr);
 }
 
-Device::List const& Device::getList() const noexcept
+Device::Map const& Device::getMap() const noexcept
 {
     return _all_devices;
 }
@@ -76,15 +85,15 @@ Device::List const& Device::getList() const noexcept
 void Device::select(std::string const& name)
 {
     bool found = false;
-    for (std::string const& listed : _all_devices) {
-        if (name == listed) {
-            _init(name.c_str());
+    for (auto const& pair : _all_devices) {
+        if (name == pair.first) {
+            _init(pair.first);
             found = true;
             break;
         }
     }
     if (!found) {
-        LOG_FUNC_CTX_WRN("Couldn't find a device with given name", name);
+        LOG_METHOD_CTX_WRN("Couldn't find a device with given name", name);
     }
 }
 
@@ -150,7 +159,13 @@ INTERNAL_END;
 std::vector<std::string> getDevices() noexcept
 {
     try {
-        return _internal::Device::get()->getList();
+        std::vector<std::string> vec;
+        _internal::Device::Map const& map = _internal::Device::get()->getMap();
+        vec.reserve(map.size());
+        for (auto const& pair : map) {
+            vec.emplace_back(pair.first);
+        }
+        return vec;
     }
     catch (std::exception const& e) {
         static std::vector<std::string> n;

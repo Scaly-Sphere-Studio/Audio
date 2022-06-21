@@ -8,6 +8,7 @@
 #include <sndfile.h>
 
 #include <map>
+#include <unordered_map>
 #include <array>
 
 /** Declares the SSS::Audio namespace.
