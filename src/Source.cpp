@@ -50,7 +50,7 @@ void Source::_removeBuffer(ALuint id)
         stop();
         alSourcei(_id, AL_BUFFER, 0);
         if (!_buffer_ids.empty()) {
-            alSourceQueueBuffers(_id, _buffer_ids.size(), &_buffer_ids[0]);
+            alSourceQueueBuffers(_id, (ALsizei)_buffer_ids.size(), &_buffer_ids[0]);
             if (was_playing) {
                 play();
             }
@@ -131,7 +131,7 @@ void Source::queueBuffers(std::vector<uint32_t> ids)
     }
     // Queue buffers
     if (!openal_ids.empty()) {
-        alSourceQueueBuffers(_id, openal_ids.size(), &openal_ids[0]);
+        alSourceQueueBuffers(_id, (ALsizei)openal_ids.size(), &openal_ids[0]);
         // Fast forward played bytes and resume playing if needed
         if (static_bytes_played > 0) {
             setPropertyInt(AL_BYTE_OFFSET, static_bytes_played);

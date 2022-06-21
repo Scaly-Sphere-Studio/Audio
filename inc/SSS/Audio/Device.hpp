@@ -4,22 +4,10 @@
 #include "SSS/Audio/Buffer.hpp"
 
 SSS_AUDIO_BEGIN;
-
-Source::Array const& getSources() noexcept;
-Buffer::Map const& getBuffers() noexcept;
-void cleanSources() noexcept;
-void cleanBuffers() noexcept;
-void createSource(uint32_t id) noexcept;
-void createBuffer(uint32_t id) noexcept;
-void removeSource(uint32_t id) noexcept;
-void removeBuffer(uint32_t id) noexcept;
-
-void setMainVolume(int volume) noexcept;
-int getMainVolume() noexcept;
-
 INTERNAL_BEGIN;
 class Device final {
 private:
+    void _init(char const* name);
     Device();
 public:
     ~Device();
@@ -28,9 +16,12 @@ public:
     // Returns singleton
     static Ptr const& get();
 
+    using List = std::vector<std::string>;
 private:
     // All devices listed by OpenAL
-    std::vector<std::string> _all_devices;
+    List _all_devices;
+    // Current device name
+    std::string _current_device;
     // Current OpenAL device
     ALCdevice* _device;
     // Current OpenAL context
@@ -44,6 +35,9 @@ private:
 public:
     // Updates _all_devices
     void updateDevices();
+    List const& getList() const noexcept;
+    void select(std::string const& name);
+    std::string getCurrent() const noexcept;
 
     Source::Array const& getSources() const noexcept;
     Buffer::Map const& getBuffers() const noexcept;
@@ -62,5 +56,23 @@ public:
     void removeBuffer(uint32_t id);
 };
 INTERNAL_END;
+
+std::vector<std::string> getDevices() noexcept;
+std::string getCurrentDevice() noexcept;
+void selectDevice(std::string const& name) noexcept;
+
+Source::Array const& getSources() noexcept;
+Buffer::Map const& getBuffers() noexcept;
+void cleanSources() noexcept;
+void cleanBuffers() noexcept;
+
+void createSource(uint32_t id) noexcept;
+void createBuffer(uint32_t id) noexcept;
+void removeSource(uint32_t id) noexcept;
+void removeBuffer(uint32_t id) noexcept;
+
+void setMainVolume(int volume) noexcept;
+int getMainVolume() noexcept;
+
 
 SSS_AUDIO_END;
