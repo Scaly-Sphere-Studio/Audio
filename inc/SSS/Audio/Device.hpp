@@ -39,6 +39,9 @@ public:
     void select(std::string const& name);
     std::string getCurrent() const noexcept;
 
+    void setMainVolume(int volume) noexcept;
+    int getMainVolume() const noexcept;
+
     Source::Array const& getSources() const noexcept;
     Buffer::Map const& getBuffers() const noexcept;
 

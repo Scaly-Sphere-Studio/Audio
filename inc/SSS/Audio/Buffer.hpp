@@ -14,7 +14,7 @@ class Buffer final {
     friend Source;
 
 public:
-    using Ptr = std::unique_ptr<Buffer>;
+    using Ptr = std::shared_ptr<Buffer>;
     using Map = std::map<uint32_t, Ptr>;
 
 private:

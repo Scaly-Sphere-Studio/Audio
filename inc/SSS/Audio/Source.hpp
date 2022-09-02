@@ -14,7 +14,7 @@ class Source final {
     friend Buffer;
 
 public:
-    using Ptr = std::unique_ptr<Source>;
+    using Ptr = std::shared_ptr<Source>;
     using Array = std::array<Ptr, 256U>;
 
 private:

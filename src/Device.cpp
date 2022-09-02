@@ -102,6 +102,25 @@ std::string Device::getCurrent() const noexcept
     return _current_device;
 }
 
+void Device::setMainVolume(int volume) noexcept try
+{
+    alListenerf(AL_GAIN, static_cast<float>(volume) / 100.f);
+}
+CATCH_AND_LOG_FUNC_EXC;
+
+int Device::getMainVolume() const noexcept
+{
+    try {
+        ALfloat gain;
+        alGetListenerf(AL_GAIN, &gain);
+        return static_cast<int>(gain * 100.f);
+    }
+    catch (std::exception const& e) {
+        LOG_FUNC_ERR(e.what());
+        return 0;
+    }
+}
+
 Source::Array const& Device::getSources() const noexcept
 {
     return _sources;
@@ -251,21 +270,13 @@ CATCH_AND_LOG_FUNC_EXC;
 
 void setMainVolume(int volume) noexcept try
 {
-    alListenerf(AL_GAIN, static_cast<float>(volume) / 100.f);
+    _internal::Device::get()->setMainVolume(volume);
 }
 CATCH_AND_LOG_FUNC_EXC;
 
 int getMainVolume() noexcept
 {
-    try {
-        ALfloat gain;
-        alGetListenerf(AL_GAIN, &gain);
-        return static_cast<int>(gain * 100.f);
-    }
-    catch (std::exception const& e) {
-        LOG_FUNC_ERR(e.what());
-        return 0;
-    }
+    return _internal::Device::get()->getMainVolume();
 }
 
 SSS_AUDIO_END;
