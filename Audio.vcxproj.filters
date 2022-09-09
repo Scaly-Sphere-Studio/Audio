@@ -22,6 +22,7 @@
     <None Include="vcpkg_scripts\Remove.ps1">
       <Filter>vcpkg_scripts</Filter>
     </None>
+    <None Include="Demo.lua" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\SSS\Audio\Buffer.hpp">
@@ -39,6 +40,9 @@
     <ClInclude Include="inc\SSS\Audio\_includes.hpp">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="inc\SSS\Audio\Lua.hpp">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Buffer.cpp">
@@ -48,6 +52,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Device.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DemoMain.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
