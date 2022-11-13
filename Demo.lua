@@ -6,12 +6,14 @@ print("Device:", Audio.getDevice())
 do
   local _ENV = Audio
   
-  Buffer.get(0):loadFile("sounds/bat-la-rate.mp3")
-  Buffer.get(1):loadFile("sounds/ok.mp3")
+  buff1 = Buffer.create()
+  buff2 = Buffer.create()
+  buff1:loadFile("sounds/bat-la-rate.mp3")
+  buff2:loadFile("sounds/ok.mp3")
   
-  local source = Source.get(0)
+  source = Source.create()
   --source.loop = true;
-  source:queueBuffers({0, 1})
+  source:queueBuffers({buff1.id, buff2.id})
   --source.volume = 30
   source:play()
   

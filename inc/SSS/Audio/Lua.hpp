@@ -7,56 +7,51 @@
 
 SSS_AUDIO_BEGIN;
 
-template <bool b>
-inline void lua_load_audio_functions(sol::table_core<b>& lua) try
+inline void lua_setup_Audio(sol::state& lua) try
 {
     auto audio = lua["Audio"].get_or_create<sol::table>();
 
     // Buffer
-    audio.new_usertype<Buffer>(
-        "Buffer",
-        // Methods
-        "loadFile", &Buffer::loadFile,
-        "getProperty", &Buffer::getProperty,
-        // Static functions
-        "get", ([](uint32_t id) {
-            auto const& buffers = getBuffers();
-            if (buffers.count(id) == 0) createBuffer(id);
-            return buffers.at(id);
-        }),
-        "clean", &cleanBuffers,
-        "create", &createBuffer,
-        "remove", &removeBuffer
+    auto buffer = audio.new_usertype<Buffer>("Buffer", sol::no_constructor);
+    // Methods
+    buffer["loadFile"] = &Buffer::loadFile;
+    buffer["getProperty"] = &Buffer::getProperty;
+    buffer["id"] = sol::property(&Buffer::getID);
+    // Static functions
+    buffer["create"] = sol::overload(
+        sol::resolve<Buffer&(uint32_t)>(Buffer::create),
+        sol::resolve<Buffer&()>(Buffer::create)
     );
+    buffer["get"] = &Buffer::get;
+    buffer["remove"] = &Buffer::remove;
+    buffer["clearAll"] = &Buffer::clearAll;
 
     // Source
-    audio.new_usertype<Source>(
-        "Source",
-        // Settings
-        "useBuffer", &Source::useBuffer,
-        "queueBuffers", &Source::queueBuffers,
-        "detachBuffers", &Source::detachBuffers,
-        // Commands
-        "play", &Source::play,
-        "pause", &Source::pause,
-        "stop", &Source::stop,
-        // State
-        "is_playing", sol::property(&Source::isPlaying),
-        "is_paused", sol::property(&Source::isPaused),
-        "is_stopped", sol::property(&Source::isStopped),
-        // Options
-        "volume", sol::property(&Source::getVolume, &Source::setVolume),
-        "loop", sol::property(&Source::isLooping, &Source::setLooping),
-        // Static functions
-        "get", ([](uint32_t id) {
-            auto const& source = getSources().at(id);
-            if (!source) createSource(id);
-            return source;
-        }),
-        "clean", &cleanSources,
-        "create", &createSource,
-        "remove", &removeSource
+    auto source = audio.new_usertype<Source>("Source", sol::no_constructor);
+    // Settings
+    source["useBuffer"] = &Source::useBuffer;
+    source["queueBuffers"] = &Source::queueBuffers;
+    source["detachBuffers"] = &Source::detachBuffers;
+    // Commands
+    source["play"] = &Source::play;
+    source["pause"] = &Source::pause;
+    source["stop"] = &Source::stop;
+    // State
+    source["is_playing"] = sol::property(&Source::isPlaying);
+    source["is_paused"] = sol::property(&Source::isPaused);
+    source["is_stopped"] = sol::property(&Source::isStopped);
+    // Options
+    source["volume"] = sol::property(&Source::getVolume, &Source::setVolume);
+    source["loop"] = sol::property(&Source::isLooping, &Source::setLooping);
+    source["id"] = sol::property(&Source::getID);
+    // Static functions
+    source["create"] = sol::overload(
+        sol::resolve<Source& (uint32_t)>(Source::create),
+        sol::resolve<Source& ()>(Source::create)
     );
+    source["get"] = &Source::get;
+    source["remove"] = &Source::remove;
+    source["clearAll"] = &Source::clearAll;
 
     // Global properties
     audio["getVolume"] = &getMainVolume;

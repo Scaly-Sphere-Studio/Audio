@@ -24,21 +24,25 @@ std::string getALErrorString(ALenum error)
 }
 INTERNAL_END;
 
-Buffer::Buffer()
+Buffer::Map Buffer::_instances{};
+
+Buffer::Buffer(uint32_t id)
     : _id([]() {
+        _internal::Device::get();   // Ensure lib is init
         ALuint buffer;
         alGenBuffers(1, &buffer);
         if (buffer == 0) {
             SSS::throw_exc("Couldn't generate an OpenAL buffer: " + _internal::getALErrorString(alGetError()));
         }
         return buffer;
-    }())
+    }()),
+    _map_id(id)
 {
 }
 
 void Buffer::_removeFromSources() noexcept try
 {
-    for (Source::Ptr const& source : getSources()) {
+    for (Source::Ptr const& source : Source::getArray()) {
         source->_removeBuffer(_id);
     }
 }
@@ -49,6 +53,36 @@ Buffer::~Buffer()
     if (_id != 0) {
         _removeFromSources();
         alDeleteBuffers(1, &_id);
+    }
+}
+
+Buffer& Buffer::create(uint32_t id)
+{
+    _instances[id].reset(new Buffer(id));
+    return *_instances.at(id);
+}
+
+Buffer& Buffer::create()
+{
+    uint32_t id = 0;
+    // Increment ID until no similar value is found
+    while (_instances.count(id) != 0) {
+        ++id;
+    }
+    return create(id);
+}
+
+Buffer* Buffer::get(uint32_t id) noexcept
+{
+    if (_instances.count(id) == 0)
+        return nullptr;
+    return _instances.at(id).get();
+}
+
+void Buffer::remove(uint32_t id)
+{
+    if (_instances.count(id) == 0) {
+        _instances.erase(_instances.find(id));
     }
 }
 

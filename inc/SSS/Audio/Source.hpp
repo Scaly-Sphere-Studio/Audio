@@ -14,15 +14,26 @@ class Source final {
     friend Buffer;
 
 public:
-    using Ptr = std::shared_ptr<Source>;
+    using Ptr = std::unique_ptr<Source>;
     using Array = std::array<Ptr, 256U>;
 
 private:
-    ALuint const _id;
+    static Array _instances;
+    ALuint const _id;       // OpenAL id
+    uint32_t const _arr_id; // _instances id
 
-    Source();
+    Source(uint32_t id);
 public:
     ~Source();
+
+    static Source& create(uint32_t id);
+    static Source& create();
+    static Source* get(uint32_t id) noexcept;
+
+    static void remove(uint32_t id);
+
+    inline static Array const& getArray() noexcept { return _instances; };
+    static void clearAll() noexcept;
 
 private:
     ALint _getType() const noexcept;
@@ -56,6 +67,8 @@ public:
 
     ALfloat getPropertyFloat(ALenum param) const;
     void setPropertyFloat(ALenum param, ALfloat value);
+
+    inline uint32_t getID() const noexcept { return _arr_id; };
 };
 
 SSS_AUDIO_END;

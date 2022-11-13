@@ -38,8 +38,8 @@ CATCH_AND_RETHROW_METHOD_EXC;
 Device::~Device()
 {
     // Free resources
-    cleanSources();
-    cleanBuffers();
+    Source::clearAll();
+    Buffer::clearAll();
     // Unbind context
     alcMakeContextCurrent(NULL);
     // Free context & device
@@ -121,58 +121,6 @@ int Device::getMainVolume() const noexcept
     }
 }
 
-Source::Array const& Device::getSources() const noexcept
-{
-    return _sources;
-}
-
-Buffer::Map const& Device::getBuffers() const noexcept
-{
-    return _buffers;
-}
-
-void Device::cleanSources() noexcept
-{
-    std::fill(_sources.begin(), _sources.end(), nullptr);
-}
-
-void Device::cleanBuffers() noexcept
-{
-    _buffers.clear();
-}
-
-void Device::createSource(uint32_t id)
-{
-    if (id >= _sources.size()) {
-        SSS::throw_exc("Can't create more than 256 sources.");
-    }
-    if (!_sources.at(id)) {
-        _sources.at(id).reset(new Source());
-    }
-}
-
-void Device::removeSource(uint32_t id)
-{
-    if (_sources.at(id)) {
-        _sources.at(id).reset();
-    }
-}
-
-void Device::createBuffer(uint32_t id)
-{
-    if (_buffers.count(id) == 0) {
-        _buffers.try_emplace(id);
-        _buffers.at(id).reset(new Buffer());
-    }
-}
-
-void Device::removeBuffer(uint32_t id)
-{
-    if (_buffers.count(id) != 0) {
-        _buffers.erase(id);
-    }
-}
-
 INTERNAL_END;
 
 std::vector<std::string> getDevices() noexcept
@@ -207,64 +155,6 @@ std::string getCurrentDevice() noexcept
 void selectDevice(std::string const& name) noexcept try
 {
     _internal::Device::get()->select(name);
-}
-CATCH_AND_LOG_FUNC_EXC;
-
-Source::Array const& getSources() noexcept try
-{
-    return _internal::Device::get()->getSources();
-}
-catch (std::exception const& e) {
-    static Source::Array arr;
-    LOG_FUNC_ERR(e.what());
-    return arr;
-}
-
-Buffer::Map const& getBuffers() noexcept
-{
-    try {
-        return _internal::Device::get()->getBuffers();
-    }
-    catch (std::exception const& e) {
-        static Buffer::Map map;
-        LOG_FUNC_ERR(e.what());
-        return map;
-    }
-}
-
-void cleanSources() noexcept try
-{
-    _internal::Device::get()->cleanSources();
-}
-CATCH_AND_LOG_FUNC_EXC;
-
-void cleanBuffers() noexcept try
-{
-    _internal::Device::get()->cleanBuffers();
-}
-CATCH_AND_LOG_FUNC_EXC;
-
-void createSource(uint32_t id) noexcept try
-{
-    _internal::Device::get()->createSource(id);
-}
-CATCH_AND_LOG_FUNC_EXC;
-
-void createBuffer(uint32_t id) noexcept try
-{
-    _internal::Device::get()->createBuffer(id);
-}
-CATCH_AND_LOG_FUNC_EXC;
-
-void removeSource(uint32_t id) noexcept try
-{
-    _internal::Device::get()->removeSource(id);
-}
-CATCH_AND_LOG_FUNC_EXC;
-
-void removeBuffer(uint32_t id) noexcept try
-{
-    _internal::Device::get()->removeBuffer(id);
 }
 CATCH_AND_LOG_FUNC_EXC;
 

@@ -5,15 +5,19 @@
 
 SSS_AUDIO_BEGIN;
 
-Source::Source()
+Source::Array Source::_instances{};
+
+Source::Source(uint32_t id)
     : _id([]() {
+        _internal::Device::get();   // Ensure lib is init
         ALuint source;
         alGenSources(1, &source);
         if (source == 0) {
             SSS::throw_exc("Couldn't generate an OpenAL source: " + _internal::getALErrorString(alGetError()));
         }
         return source;
-    }())
+    }()),
+    _arr_id(id)
 {
 }
 
@@ -23,6 +27,48 @@ Source::~Source()
         stop();
         alSourcei(_id, AL_BUFFER, 0);
         alDeleteSources(1, &_id);
+    }
+}
+
+
+Source& Source::create(uint32_t id) try
+{
+    if (id >= _instances.size()) {
+        throw_exc(CONTEXT_MSG("Invalid ID (out of range)", id));
+    }
+    _instances[id].reset(new Source(id));
+    return *_instances.at(id);
+}
+CATCH_AND_RETHROW_FUNC_EXC;
+
+Source& Source::create() try
+{
+    uint32_t id = 0;
+    // Increment ID until no similar value is used
+    while (_instances[id] && id < _instances.size()) {
+        ++id;
+    }
+    if (id >= _instances.size()) {
+        SSS::throw_exc("Can't create any OpenAL Audio Source anymore (size full).");
+    }
+    return create(id);
+}
+CATCH_AND_RETHROW_FUNC_EXC;
+
+Source* Source::get(uint32_t id) noexcept
+{
+    return _instances[id].get();
+}
+
+void Source::remove(uint32_t id)
+{
+    _instances[id].reset();
+}
+
+void Source::clearAll() noexcept
+{
+    for (auto& ptr : _instances) {
+        ptr.reset();
     }
 }
 
@@ -61,14 +107,9 @@ void Source::_removeBuffer(ALuint id)
 void Source::useBuffer(uint32_t id)
 {
     RETURN_IF_NULL;
-    Buffer::Map const& buffers = getBuffers();
-    if (buffers.count(id) == 0) {
-        LOG_CTX_WRN("SSS/Audio", "Found no Buffer to use at given ID.");
-        return;
-    }
-    Buffer::Ptr const& buffer = getBuffers().at(id);
+    Buffer* buffer = Buffer::get(id);
     if (!buffer) {
-        LOG_CTX_WRN("SSS/Audio", "Tried to use non-initialized Buffer.");
+        LOG_CTX_WRN("SSS/Audio", "Found no Buffer to use at given ID.");
         return;
     }
     bool was_playing = false;
@@ -120,7 +161,7 @@ void Source::queueBuffers(std::vector<uint32_t> ids)
         }
     }
     // Retrieve OpenAL ids
-    Buffer::Map const& buffers = getBuffers();
+    Buffer::Map const& buffers = Buffer::getMap();
     for (uint32_t const& id : ids) {
         if (buffers.count(id) == 0) continue;
         Buffer::Ptr const& buffer = buffers.at(id);
@@ -153,7 +194,7 @@ std::vector<uint32_t> Source::getBufferIDs() const noexcept try
 {
     std::vector<uint32_t> ids;
     ids.reserve(_buffer_ids.size());
-    Buffer::Map const& buffers = getBuffers();
+    Buffer::Map const& buffers = Buffer::getMap();
     for (ALuint const& id : _buffer_ids) {
         for (auto const& pair : buffers) {
             if (pair.second->_id == id) {
