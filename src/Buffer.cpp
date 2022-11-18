@@ -3,6 +3,7 @@
 
 SSS_AUDIO_BEGIN;
 
+
 INTERNAL_BEGIN;
 std::string getALErrorString(ALenum error)
 {
@@ -24,43 +25,41 @@ std::string getALErrorString(ALenum error)
 }
 INTERNAL_END;
 
-Buffer::Map Buffer::_instances{};
+
+std::map<uint32_t, std::unique_ptr<Buffer>> Buffer::_instances{};
+
 
 Buffer::Buffer(uint32_t id)
-    : _id([]() {
-        _internal::Device::get();   // Ensure lib is init
-        ALuint buffer;
-        alGenBuffers(1, &buffer);
-        if (buffer == 0) {
-            SSS::throw_exc("Couldn't generate an OpenAL buffer: " + _internal::getALErrorString(alGetError()));
-        }
-        return buffer;
-    }()),
+    : _openal_id([]() {
+    _internal::Device::get();   // Ensure lib is init
+    ALuint buffer;
+    alGenBuffers(1, &buffer);
+    if (buffer == 0) {
+        SSS::throw_exc("Couldn't generate an OpenAL buffer: " + _internal::getALErrorString(alGetError()));
+    }
+    return buffer;
+        }()),
     _map_id(id)
 {
 }
 
-void Buffer::_removeFromSources() noexcept try
-{
-    for (Source::Ptr const& source : Source::getArray()) {
-        source->_removeBuffer(_id);
-    }
-}
-CATCH_AND_LOG_FUNC_EXC;
 
 Buffer::~Buffer()
 {
-    if (_id != 0) {
+    if (_openal_id != 0) {
         _removeFromSources();
-        alDeleteBuffers(1, &_id);
+        alDeleteBuffers(1, &_openal_id);
     }
 }
+
+
 
 Buffer& Buffer::create(uint32_t id)
 {
     _instances[id].reset(new Buffer(id));
     return *_instances.at(id);
 }
+
 
 Buffer& Buffer::create()
 {
@@ -72,6 +71,7 @@ Buffer& Buffer::create()
     return create(id);
 }
 
+
 Buffer* Buffer::get(uint32_t id) noexcept
 {
     if (_instances.count(id) == 0)
@@ -79,12 +79,14 @@ Buffer* Buffer::get(uint32_t id) noexcept
     return _instances.at(id).get();
 }
 
+
 void Buffer::remove(uint32_t id)
 {
     if (_instances.count(id) == 0) {
         _instances.erase(_instances.find(id));
     }
 }
+
 
 void Buffer::loadFile(const std::string& filename) try
 {
@@ -123,7 +125,7 @@ void Buffer::loadFile(const std::string& filename) try
     _removeFromSources();
 
     // Fill buffer
-    alBufferData(_id, format, &samples[0], sample_nb * sizeof(short), sample_hz);
+    alBufferData(_openal_id, format, &samples[0], sample_nb * sizeof(short), sample_hz);
     ALenum err = alGetError();
     if (err != AL_NO_ERROR) {
         SSS::throw_exc("Error filling buffer: " + _internal::getALErrorString(err));
@@ -131,11 +133,23 @@ void Buffer::loadFile(const std::string& filename) try
 }
 CATCH_AND_LOG_METHOD_EXC;
 
+
 ALint Buffer::getProperty(ALenum param) const
 {
     ALint ret;
-    alGetBufferi(_id, param, &ret);
+    alGetBufferi(_openal_id, param, &ret);
     return ret;;
 }
+
+
+
+void Buffer::_removeFromSources() noexcept try
+{
+    for (auto const& source : Source::getArray()) {
+        if (source)
+            source->_removeBuffer(_openal_id);
+    }
+}
+CATCH_AND_LOG_FUNC_EXC;
 
 SSS_AUDIO_END;

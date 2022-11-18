@@ -27,6 +27,7 @@ void Device::_init(std::string const& name)
     }
 }
 
+
 Device::Device() try
 {
     updateDevices();
@@ -34,6 +35,7 @@ Device::Device() try
     LOG_MSG("OpenAL device & context created");
 }
 CATCH_AND_RETHROW_METHOD_EXC;
+
 
 Device::~Device()
 {
@@ -48,11 +50,14 @@ Device::~Device()
     LOG_MSG("OpenAL device & context destroyed");
 }
 
-Device::Ptr const& Device::get()
+
+
+std::unique_ptr<Device> const& Device::get()
 {
-    static Ptr singleton(new Device());
+    static std::unique_ptr<Device> singleton(new Device());
     return singleton;
 }
+
 
 void Device::updateDevices()
 {
@@ -77,12 +82,8 @@ void Device::updateDevices()
     }
 }
 
-Device::Map const& Device::getMap() const noexcept
-{
-    return _all_devices;
-}
 
-void Device::select(std::string const& name)
+void Device::selectDevice(std::string const& name)
 {
     bool found = false;
     for (auto const& pair : _all_devices) {
@@ -97,16 +98,13 @@ void Device::select(std::string const& name)
     }
 }
 
-std::string Device::getCurrent() const noexcept
-{
-    return _current_device;
-}
 
 void Device::setMainVolume(int volume) noexcept try
 {
     alListenerf(AL_GAIN, static_cast<float>(volume) / 100.f);
 }
 CATCH_AND_LOG_FUNC_EXC;
+
 
 int Device::getMainVolume() const noexcept
 {
@@ -123,11 +121,12 @@ int Device::getMainVolume() const noexcept
 
 INTERNAL_END;
 
+
 std::vector<std::string> getDevices() noexcept
 {
     try {
         std::vector<std::string> vec;
-        _internal::Device::Map const& map = _internal::Device::get()->getMap();
+        auto const& map = _internal::Device::get()->getAllDevices();
         vec.reserve(map.size());
         for (auto const& pair : map) {
             vec.emplace_back(pair.first);
@@ -141,10 +140,11 @@ std::vector<std::string> getDevices() noexcept
     }
 }
 
+
 std::string getCurrentDevice() noexcept
 {
     try {
-        return _internal::Device::get()->getCurrent();
+        return _internal::Device::get()->getCurrentDevice();
     }
     catch (std::exception const& e) {
         LOG_FUNC_ERR(e.what());
@@ -152,17 +152,20 @@ std::string getCurrentDevice() noexcept
     }
 }
 
+
 void selectDevice(std::string const& name) noexcept try
 {
-    _internal::Device::get()->select(name);
+    _internal::Device::get()->selectDevice(name);
 }
 CATCH_AND_LOG_FUNC_EXC;
+
 
 void setMainVolume(int volume) noexcept try
 {
     _internal::Device::get()->setMainVolume(volume);
 }
 CATCH_AND_LOG_FUNC_EXC;
+
 
 int getMainVolume() noexcept
 {

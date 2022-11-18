@@ -5,10 +5,12 @@
 
 SSS_AUDIO_BEGIN;
 
-Source::Array Source::_instances{};
+
+std::array<std::unique_ptr<Source>, 256U> Source::_instances{};
+
 
 Source::Source(uint32_t id)
-    : _id([]() {
+    : _openal_id([]() {
         _internal::Device::get();   // Ensure lib is init
         ALuint source;
         alGenSources(1, &source);
@@ -21,14 +23,16 @@ Source::Source(uint32_t id)
 {
 }
 
+
 Source::~Source()
 {
-    if (_id != 0) {
+    if (_openal_id != 0) {
         stop();
-        alSourcei(_id, AL_BUFFER, 0);
-        alDeleteSources(1, &_id);
+        alSourcei(_openal_id, AL_BUFFER, 0);
+        alDeleteSources(1, &_openal_id);
     }
 }
+
 
 
 Source& Source::create(uint32_t id) try
@@ -40,6 +44,7 @@ Source& Source::create(uint32_t id) try
     return *_instances.at(id);
 }
 CATCH_AND_RETHROW_FUNC_EXC;
+
 
 Source& Source::create() try
 {
@@ -55,15 +60,18 @@ Source& Source::create() try
 }
 CATCH_AND_RETHROW_FUNC_EXC;
 
+
 Source* Source::get(uint32_t id) noexcept
 {
     return _instances[id].get();
 }
 
+
 void Source::remove(uint32_t id)
 {
     _instances[id].reset();
 }
+
 
 void Source::clearAll() noexcept
 {
@@ -72,37 +80,6 @@ void Source::clearAll() noexcept
     }
 }
 
-ALint Source::_getType() const noexcept
-{
-    RETURN_IF_NULL 0;
-    ALint type;
-    alGetSourcei(_id, AL_SOURCE_TYPE, &type);
-    return type;
-}
-
-void Source::_removeBuffer(ALuint id)
-{
-    RETURN_IF_NULL;
-    size_t const size_before = _buffer_ids.size();
-    _buffer_ids.erase(
-        std::remove_if(
-            _buffer_ids.begin(),
-            _buffer_ids.end(),
-            [&](ALuint elem) { return elem == id; }),
-        _buffer_ids.end()
-    );
-    if (_buffer_ids.size() != size_before) {
-        bool const was_playing = isPlaying();
-        stop();
-        alSourcei(_id, AL_BUFFER, 0);
-        if (!_buffer_ids.empty()) {
-            alSourceQueueBuffers(_id, (ALsizei)_buffer_ids.size(), &_buffer_ids[0]);
-            if (was_playing) {
-                play();
-            }
-        }
-    }
-}
 
 void Source::useBuffer(uint32_t id)
 {
@@ -117,13 +94,14 @@ void Source::useBuffer(uint32_t id)
         was_playing = isPlaying();
         stop();
     }
-    alSourcei(_id, AL_BUFFER, buffer->_id);
+    alSourcei(_openal_id, AL_BUFFER, buffer->_openal_id);
     _buffer_ids.resize(1);
-    _buffer_ids[0] = buffer->_id;
+    _buffer_ids[0] = buffer->_openal_id;
     if (was_playing) {
         play();
     }
 }
+
 
 void Source::queueBuffers(std::vector<uint32_t> ids)
 {
@@ -150,7 +128,7 @@ void Source::queueBuffers(std::vector<uint32_t> ids)
         ALint const current_id = getPropertyInt(AL_BUFFER);
         if (current_id != 0) {
             // Detach buffer
-            alSourcei(_id, AL_BUFFER, 0);
+            alSourcei(_openal_id, AL_BUFFER, 0);
             // Add to queue
             openal_ids.push_back(current_id);
             _buffer_ids.push_back(current_id);
@@ -161,18 +139,16 @@ void Source::queueBuffers(std::vector<uint32_t> ids)
         }
     }
     // Retrieve OpenAL ids
-    Buffer::Map const& buffers = Buffer::getMap();
     for (uint32_t const& id : ids) {
-        if (buffers.count(id) == 0) continue;
-        Buffer::Ptr const& buffer = buffers.at(id);
+        Buffer* buffer = Buffer::get(id);
         if (buffer) {
-            openal_ids.push_back(buffer->_id);
-            _buffer_ids.push_back(buffer->_id);
+            openal_ids.push_back(buffer->_openal_id);
+            _buffer_ids.push_back(buffer->_openal_id);
         }
     }
     // Queue buffers
     if (!openal_ids.empty()) {
-        alSourceQueueBuffers(_id, (ALsizei)openal_ids.size(), &openal_ids[0]);
+        alSourceQueueBuffers(_openal_id, (ALsizei)openal_ids.size(), &openal_ids[0]);
         // Fast forward played bytes and resume playing if needed
         if (static_bytes_played > 0) {
             setPropertyInt(AL_BYTE_OFFSET, static_bytes_played);
@@ -183,21 +159,22 @@ void Source::queueBuffers(std::vector<uint32_t> ids)
     }
 }
 
+
 void Source::detachBuffers()
 {
     stop();
-    alSourcei(_id, AL_BUFFER, 0);
+    alSourcei(_openal_id, AL_BUFFER, 0);
     _buffer_ids.clear();
 }
+
 
 std::vector<uint32_t> Source::getBufferIDs() const noexcept try
 {
     std::vector<uint32_t> ids;
     ids.reserve(_buffer_ids.size());
-    Buffer::Map const& buffers = Buffer::getMap();
     for (ALuint const& id : _buffer_ids) {
-        for (auto const& pair : buffers) {
-            if (pair.second->_id == id) {
+        for (auto const& pair : Buffer::getMap()) {
+            if (pair.second->_openal_id == id) {
                 ids.push_back(pair.first);
                 break;
             }
@@ -210,31 +187,27 @@ catch (std::exception const& e) {
     return std::vector<uint32_t>();
 }
 
+
 void Source::play()
 {
     RETURN_IF_NULL;
-    alSourcePlay(_id);
+    alSourcePlay(_openal_id);
 }
+
 
 void Source::pause()
 {
     RETURN_IF_NULL;
-    alSourcePause(_id);
+    alSourcePause(_openal_id);
 }
+
 
 void Source::stop()
 {
     RETURN_IF_NULL;
-    alSourceStop(_id);
+    alSourceStop(_openal_id);
 }
 
-ALint Source::_getState() const noexcept
-{
-    RETURN_IF_NULL 0;
-    ALint state;
-    alGetSourcei(_id, AL_SOURCE_STATE, &state);
-    return state;
-}
 
 bool Source::isPlaying() const noexcept
 {
@@ -242,11 +215,13 @@ bool Source::isPlaying() const noexcept
     return _getState() == AL_PLAYING;
 }
 
+
 bool Source::isPaused() const noexcept
 {
     RETURN_IF_NULL false;
     return _getState() == AL_PAUSED;
 }
+
 
 bool Source::isStopped() const noexcept
 {
@@ -255,52 +230,104 @@ bool Source::isStopped() const noexcept
     return status == AL_STOPPED || status == AL_INITIAL;
 }
 
+
 void Source::setVolume(int percentage)
 {
     setPropertyFloat(AL_GAIN, static_cast<float>(percentage) / 100.f);
 }
+
 
 int Source::getVolume() const
 {
     return static_cast<int>(getPropertyFloat(AL_GAIN) * 100.f);
 }
 
+
 void Source::setLooping(bool enable)
 {
     setPropertyInt(AL_LOOPING, static_cast<int>(enable));
 }
+
 
 bool Source::isLooping() const
 {
     return static_cast<bool>(getPropertyInt(AL_LOOPING));
 }
 
+
 ALint Source::getPropertyInt(ALenum param) const
 {
     RETURN_IF_NULL 0;
     ALint ret;
-    alGetSourcei(_id, param, &ret);
+    alGetSourcei(_openal_id, param, &ret);
     return ret;;
 }
+
 
 void Source::setPropertyInt(ALenum param, ALint value)
 {
     RETURN_IF_NULL;
-    alSourcei(_id, param, value);
+    alSourcei(_openal_id, param, value);
 }
+
 
 ALfloat Source::getPropertyFloat(ALenum param) const
 {
     RETURN_IF_NULL 0.f;
     ALfloat ret;
-    alGetSourcef(_id, param, &ret);
+    alGetSourcef(_openal_id, param, &ret);
     return ret;;
 }
+
 
 void Source::setPropertyFloat(ALenum param, ALfloat value)
 {
     RETURN_IF_NULL;
-    alSourcef(_id, param, value);
+    alSourcef(_openal_id, param, value);
+}
+
+
+
+ALint Source::_getType() const noexcept
+{
+    RETURN_IF_NULL 0;
+    ALint type;
+    alGetSourcei(_openal_id, AL_SOURCE_TYPE, &type);
+    return type;
+}
+
+
+ALint Source::_getState() const noexcept
+{
+    RETURN_IF_NULL 0;
+    ALint state;
+    alGetSourcei(_openal_id, AL_SOURCE_STATE, &state);
+    return state;
+}
+
+
+void Source::_removeBuffer(ALuint id)
+{
+    RETURN_IF_NULL;
+    size_t const size_before = _buffer_ids.size();
+    _buffer_ids.erase(
+        std::remove_if(
+            _buffer_ids.begin(),
+            _buffer_ids.end(),
+            [&](ALuint elem) { return elem == id; }),
+        _buffer_ids.end()
+    );
+    if (_buffer_ids.size() != size_before) {
+        bool const was_playing = isPlaying();
+        stop();
+        alSourcei(_openal_id, AL_BUFFER, 0);
+        if (!_buffer_ids.empty()) {
+            alSourceQueueBuffers(_openal_id, (ALsizei)_buffer_ids.size(), &_buffer_ids[0]);
+            if (was_playing) {
+                play();
+            }
+        }
+    }
 }
 
 SSS_AUDIO_END;
