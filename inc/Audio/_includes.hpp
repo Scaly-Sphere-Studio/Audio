@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SSS_AUDIO_INCLUDES_HPP
+#define SSS_AUDIO_INCLUDES_HPP
 
 #include <SSS/Commons.hpp>
 
@@ -22,15 +23,35 @@
  */
 #define SSS_AUDIO_END SSS_END; }
 
+#ifdef SSS_AUDIO_EXPORTS
+# define SSS_AUDIO_API __declspec(dllexport)
+#else
+# ifdef SSS_AUDIO_DEMO
+#  define SSS_AUDIO_API
+# else
+#  define SSS_AUDIO_API __declspec(dllimport)
+# endif
+#endif
+
 SSS_AUDIO_BEGIN;
+
 INTERNAL_BEGIN;
-
 std::string getALErrorString(ALenum error);
-
+void init();
 INTERNAL_END;
+
+SSS_AUDIO_API std::vector<std::string> getDevices() noexcept;
+SSS_AUDIO_API std::string getCurrentDevice() noexcept;
+SSS_AUDIO_API void selectDevice(std::string const& name) noexcept;
+
+SSS_AUDIO_API void setMainVolume(int volume) noexcept;
+SSS_AUDIO_API int getMainVolume() noexcept;
+
 SSS_AUDIO_END;
 
  /** Holds all SSS::Audio related log flags.*/
 namespace SSS::Log::Audio {
     LOG_NAMESPACE_BASICS(Log);
 }
+
+#endif // SSS_AUDIO_INCLUDES_HPP

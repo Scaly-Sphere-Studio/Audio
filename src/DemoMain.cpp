@@ -1,5 +1,5 @@
 #define SSS_LUA
-#include "SSS/Audio.hpp"
+#include "Audio.hpp"
 
 int main() try
 {

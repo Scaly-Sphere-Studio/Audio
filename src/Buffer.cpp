@@ -1,5 +1,5 @@
-#include "SSS/Audio/Buffer.hpp"
-#include "SSS/Audio/Device.hpp"
+#include "Audio/Buffer.hpp"
+#include "Audio/Source.hpp"
 
 SSS_AUDIO_BEGIN;
 
@@ -31,14 +31,14 @@ std::map<uint32_t, std::unique_ptr<Buffer>> Buffer::_instances{};
 
 Buffer::Buffer(uint32_t id)
     : _openal_id([]() {
-    _internal::Device::get();   // Ensure lib is init
-    ALuint buffer;
-    alGenBuffers(1, &buffer);
-    if (buffer == 0) {
-        SSS::throw_exc("Couldn't generate an OpenAL buffer: " + _internal::getALErrorString(alGetError()));
-    }
-    return buffer;
-        }()),
+        _internal::init(); // Ensure lib is init
+        ALuint buffer;
+        alGenBuffers(1, &buffer);
+        if (buffer == 0) {
+            SSS::throw_exc("Couldn't generate an OpenAL buffer: " + _internal::getALErrorString(alGetError()));
+        }
+        return buffer;
+    }()),
     _map_id(id)
 {
 }

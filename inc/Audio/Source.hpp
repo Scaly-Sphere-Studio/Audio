@@ -1,15 +1,21 @@
-#pragma once
+#ifndef SSS_AUDIO_SOURCE_HPP
+#define SSS_AUDIO_SOURCE_HPP
 
-#include "SSS/Audio/_includes.hpp"
+#include "_includes.hpp"
 
 SSS_AUDIO_BEGIN;
 
 INTERNAL_BEGIN
 class Device; // Pre-declaration
 INTERNAL_END
-class Buffer;
+class SSS_AUDIO_API Buffer;
 
-class Source final {
+// Ignore warning about STL exports as they're private members
+#pragma warning(push, 2)
+#pragma warning(disable: 4251)
+#pragma warning(disable: 4275)
+
+class SSS_AUDIO_API Source final {
     friend _internal::Device;
     friend Buffer;
 
@@ -73,4 +79,8 @@ private:
     std::vector<ALuint> _buffer_ids;
 };
 
+#pragma warning(pop)
+
 SSS_AUDIO_END;
+
+#endif // SSS_AUDIO_SOURCE_HPP

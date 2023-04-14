@@ -1,6 +1,7 @@
-#pragma once
+#ifndef SSS_AUDIO_BUFFER_HPP
+#define SSS_AUDIO_BUFFER_HPP
 
-#include "SSS/Audio/_includes.hpp"
+#include "_includes.hpp"
 
 SSS_AUDIO_BEGIN;
 
@@ -9,7 +10,12 @@ class Device; // Pre-declaration
 INTERNAL_END
 class Source; // Pre-declaration
 
-class Buffer final {
+// Ignore warning about STL exports as they're private members
+#pragma warning(push, 2)
+#pragma warning(disable: 4251)
+#pragma warning(disable: 4275)
+
+class SSS_AUDIO_API Buffer final {
     friend _internal::Device;
     friend Source;
 
@@ -44,4 +50,8 @@ private:
     uint32_t const _map_id;     // _instances id
 };
 
+#pragma warning(pop)
+
 SSS_AUDIO_END;
+
+#endif // SSS_AUDIO_BUFFER_HPP

@@ -1,13 +1,10 @@
-#pragma once
-
-#include "SSS/Audio/Device.hpp"
-
-#ifdef SSS_LUA
-#include <sol/sol.hpp>
+#include "Audio/Lua.hpp"
+#include "Audio/Source.hpp"
+#include "Audio/Buffer.hpp"
 
 SSS_AUDIO_BEGIN;
 
-inline void lua_setup_Audio(sol::state& lua) try
+void lua_setup_Audio(sol::state& lua) try
 {
     auto audio = lua["Audio"].get_or_create<sol::table>();
 
@@ -19,8 +16,8 @@ inline void lua_setup_Audio(sol::state& lua) try
     buffer["id"] = sol::property(&Buffer::getID);
     // Static functions
     buffer["create"] = sol::overload(
-        sol::resolve<Buffer&(uint32_t)>(Buffer::create),
-        sol::resolve<Buffer&()>(Buffer::create)
+        sol::resolve<Buffer& (uint32_t)>(Buffer::create),
+        sol::resolve<Buffer& ()>(Buffer::create)
     );
     buffer["get"] = &Buffer::get;
     buffer["remove"] = &Buffer::remove;
@@ -63,4 +60,3 @@ inline void lua_setup_Audio(sol::state& lua) try
 CATCH_AND_RETHROW_FUNC_EXC;
 
 SSS_AUDIO_END;
-#endif

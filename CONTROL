@@ -1,3 +1,7 @@
 Source: sss-audio
 Description: Playing of audio files using OpenAL & sndfile 
 Build-Depends: openal-soft, libsndfile, sss-commons
+
+Feature: lua
+Description: Lib features integrated in lua.
+Build-Depends: sss-commons[lua]

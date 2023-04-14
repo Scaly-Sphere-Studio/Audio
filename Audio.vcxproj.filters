@@ -25,22 +25,19 @@
     <None Include="Demo.lua" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\SSS\Audio\Buffer.hpp">
+    <ClInclude Include="inc\Audio\Buffer.hpp">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\SSS\Audio\Source.hpp">
+    <ClInclude Include="inc\Audio\Source.hpp">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\SSS\Audio\Device.hpp">
+    <ClInclude Include="inc\Audio.hpp">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\SSS\Audio.hpp">
+    <ClInclude Include="inc\Audio\_includes.hpp">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="inc\SSS\Audio\_includes.hpp">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\SSS\Audio\Lua.hpp">
+    <ClInclude Include="inc\Audio\Lua.hpp">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -55,6 +52,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\DemoMain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Lua.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
