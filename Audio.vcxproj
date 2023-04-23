@@ -44,9 +44,6 @@
     <ClCompile Include="src\Buffer.cpp" />
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\Device.cpp" />
-    <ClCompile Include="src\Lua.cpp">
-      <ExcludedFromBuild Condition="('$(SSS_LUA)' == '') and ('$(Configuration)'!='Demo')">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\DemoMain.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)'!='Demo'">true</ExcludedFromBuild>
     </ClCompile>
