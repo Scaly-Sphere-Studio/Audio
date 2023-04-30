@@ -31,7 +31,7 @@ std::map<uint32_t, std::unique_ptr<Buffer>> Buffer::_instances{};
 
 Buffer::Buffer(uint32_t id)
     : _openal_id([]() {
-        _internal::init(); // Ensure lib is init
+        init();
         ALuint buffer;
         alGenBuffers(1, &buffer);
         if (buffer == 0) {

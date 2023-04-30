@@ -5,6 +5,9 @@ SSS_AUDIO_BEGIN;
 INTERNAL_BEGIN;
 
 class Device final {
+    friend void ::SSS::Audio::init();
+    friend void ::SSS::Audio::terminate();
+    friend bool is_init() noexcept;
 public:
     Device(const Device&) = delete; // Copy constructor
     Device(Device&&) = delete; // Move constructor
@@ -13,7 +16,7 @@ public:
     ~Device();
 
     // Returns singleton
-    static std::unique_ptr<Device> const& get();
+    static Device& get();
 
     // Updates _all_devices
     void updateDevices();
@@ -25,6 +28,7 @@ public:
     int getMainVolume() const noexcept;
 
 private:
+    static std::unique_ptr<Device> _ptr;
     Device();
 
     void _init(std::string const& name = "");
@@ -38,6 +42,8 @@ private:
     // Current OpenAL context
     ALCcontext* _context;
 };
+
+std::unique_ptr<Device> Device::_ptr{};
 
 void Device::_init(std::string const& name)
 {
@@ -86,12 +92,10 @@ Device::~Device()
     LOG_MSG("OpenAL device & context destroyed");
 }
 
-
-
-std::unique_ptr<Device> const& Device::get()
+Device& Device::get()
 {
-    static std::unique_ptr<Device> singleton(new Device());
-    return singleton;
+    init();
+    return *_ptr;
 }
 
 
@@ -155,19 +159,30 @@ int Device::getMainVolume() const noexcept
     }
 }
 
-void init()
+bool is_init() noexcept
 {
-    Device::get();
+    return !!Device::_ptr;
 }
 
 INTERNAL_END;
+
+void init()
+{
+    if (!_internal::Device::_ptr)
+        _internal::Device::_ptr.reset(new _internal::Device);
+}
+
+void terminate()
+{
+    _internal::Device::_ptr.reset();
+}
 
 
 std::vector<std::string> getDevices() noexcept
 {
     try {
         std::vector<std::string> vec;
-        auto const& map = _internal::Device::get()->getAllDevices();
+        auto const& map = _internal::Device::get().getAllDevices();
         vec.reserve(map.size());
         for (auto const& pair : map) {
             vec.emplace_back(pair.first);
@@ -185,7 +200,7 @@ std::vector<std::string> getDevices() noexcept
 std::string getCurrentDevice() noexcept
 {
     try {
-        return _internal::Device::get()->getCurrentDevice();
+        return _internal::Device::get().getCurrentDevice();
     }
     catch (std::exception const& e) {
         LOG_FUNC_ERR(e.what());
@@ -196,21 +211,21 @@ std::string getCurrentDevice() noexcept
 
 void selectDevice(std::string const& name) noexcept try
 {
-    _internal::Device::get()->selectDevice(name);
+    _internal::Device::get().selectDevice(name);
 }
 CATCH_AND_LOG_FUNC_EXC;
 
 
 void setMainVolume(int volume) noexcept try
 {
-    _internal::Device::get()->setMainVolume(volume);
+    _internal::Device::get().setMainVolume(volume);
 }
 CATCH_AND_LOG_FUNC_EXC;
 
 
 int getMainVolume() noexcept
 {
-    return _internal::Device::get()->getMainVolume();
+    return _internal::Device::get().getMainVolume();
 }
 
 SSS_AUDIO_END;

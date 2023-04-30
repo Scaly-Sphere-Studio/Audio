@@ -11,7 +11,7 @@ std::array<std::unique_ptr<Source>, 256U> Source::_instances{};
 
 Source::Source(uint32_t id)
     : _openal_id([]() {
-        _internal::init(); // Ensure lib is init
+        init();
         ALuint source;
         alGenSources(1, &source);
         if (source == 0) {

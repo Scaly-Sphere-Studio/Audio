@@ -13,6 +13,9 @@ inline void lua_setup_Audio(sol::state& lua) try
 {
     auto audio = lua["Audio"].get_or_create<sol::table>();
 
+    audio["init"] = &init;
+    audio["terminate"] = &terminate;
+
     // Buffer
     auto buffer = audio.new_usertype<Buffer>("Buffer", sol::no_constructor);
     // Methods

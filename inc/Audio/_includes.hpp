@@ -37,8 +37,11 @@ SSS_AUDIO_BEGIN;
 
 INTERNAL_BEGIN;
 std::string getALErrorString(ALenum error);
-void init();
+bool is_init() noexcept;
 INTERNAL_END;
+
+SSS_AUDIO_API void init();
+SSS_AUDIO_API void terminate();
 
 SSS_AUDIO_API std::vector<std::string> getDevices() noexcept;
 SSS_AUDIO_API std::string getCurrentDevice() noexcept;
