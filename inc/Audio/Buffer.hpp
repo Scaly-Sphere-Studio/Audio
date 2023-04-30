@@ -28,6 +28,7 @@ public:
 
     static Buffer& create(uint32_t id);
     static Buffer& create();
+    static Buffer& create(std::string const& filename);
     static Buffer* get(uint32_t id) noexcept;
     static void remove(uint32_t id);
 

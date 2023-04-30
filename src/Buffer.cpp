@@ -71,6 +71,13 @@ Buffer& Buffer::create()
     return create(id);
 }
 
+Buffer& Buffer::create(std::string const& filename)
+{
+    auto& buff = create();
+    buff.loadFile(filename);
+    return buff;
+}
+
 
 Buffer* Buffer::get(uint32_t id) noexcept
 {

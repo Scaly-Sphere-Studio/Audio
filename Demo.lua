@@ -8,12 +8,10 @@ do
   
   init()
   
-  buff1 = Buffer.create()
-  buff2 = Buffer.create()
-  buff1:loadFile("sounds/bat-la-rate.mp3")
-  buff2:loadFile("sounds/ok.mp3")
+  buff1 = Buffer.new("sounds/bat-la-rate.mp3")
+  buff2 = Buffer.new("sounds/ok.mp3")
   
-  source = Source.create()
+  source = Source.new()
   --source.loop = true;
   source:queueBuffers({buff1.id, buff2.id})
   source.volume = 30

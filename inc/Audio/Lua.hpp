@@ -17,22 +17,25 @@ inline void lua_setup_Audio(sol::state& lua) try
     audio["terminate"] = &terminate;
 
     // Buffer
-    auto buffer = audio.new_usertype<Buffer>("Buffer", sol::no_constructor);
+    auto buffer = audio.new_usertype<Buffer>("Buffer", sol::factories(
+        sol::resolve<Buffer& (uint32_t)>(Buffer::create),
+        sol::resolve<Buffer& ()>(Buffer::create),
+        sol::resolve<Buffer& (std::string const&)>(Buffer::create)
+    ));
     // Methods
     buffer["loadFile"] = &Buffer::loadFile;
     buffer["getProperty"] = &Buffer::getProperty;
     buffer["id"] = sol::property(&Buffer::getID);
     // Static functions
-    buffer["create"] = sol::overload(
-        sol::resolve<Buffer& (uint32_t)>(Buffer::create),
-        sol::resolve<Buffer& ()>(Buffer::create)
-    );
     buffer["get"] = &Buffer::get;
     buffer["remove"] = &Buffer::remove;
     buffer["clearAll"] = &Buffer::clearAll;
 
     // Source
-    auto source = audio.new_usertype<Source>("Source", sol::no_constructor);
+    auto source = audio.new_usertype<Source>("Source", sol::factories(
+        sol::resolve<Source& (uint32_t)>(Source::create),
+        sol::resolve<Source& ()>(Source::create)
+    ));
     // Settings
     source["useBuffer"] = &Source::useBuffer;
     source["queueBuffers"] = &Source::queueBuffers;
@@ -50,10 +53,6 @@ inline void lua_setup_Audio(sol::state& lua) try
     source["loop"] = sol::property(&Source::isLooping, &Source::setLooping);
     source["id"] = sol::property(&Source::getID);
     // Static functions
-    source["create"] = sol::overload(
-        sol::resolve<Source& (uint32_t)>(Source::create),
-        sol::resolve<Source& ()>(Source::create)
-    );
     source["get"] = &Source::get;
     source["remove"] = &Source::remove;
     source["clearAll"] = &Source::clearAll;
@@ -62,7 +61,7 @@ inline void lua_setup_Audio(sol::state& lua) try
     audio["getVolume"] = &getMainVolume;
     audio["setVolume"] = &setMainVolume;
     audio["getDevice"] = &getCurrentDevice,
-        audio["setDevice"] = &selectDevice;
+    audio["setDevice"] = &selectDevice;
     audio["getAllDevices"] = &getDevices;
 }
 CATCH_AND_RETHROW_FUNC_EXC;
