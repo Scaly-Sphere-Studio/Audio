@@ -20,8 +20,9 @@ inline void lua_setup_Audio(sol::state& lua) try
     auto buffer = audio.new_usertype<Buffer>("Buffer", sol::factories(
         sol::resolve<Buffer& (uint32_t)>(Buffer::create),
         sol::resolve<Buffer& ()>(Buffer::create),
-        sol::resolve<Buffer& (std::string const&)>(Buffer::create)
-    ));
+        sol::resolve<Buffer& (std::string const&)>(Buffer::create)),
+        sol::base_classes, sol::bases<Base>()
+    );
     // Methods
     buffer["loadFile"] = &Buffer::loadFile;
     buffer["getProperty"] = &Buffer::getProperty;
@@ -34,8 +35,9 @@ inline void lua_setup_Audio(sol::state& lua) try
     // Source
     auto source = audio.new_usertype<Source>("Source", sol::factories(
         sol::resolve<Source& (uint32_t)>(Source::create),
-        sol::resolve<Source& ()>(Source::create)
-    ));
+        sol::resolve<Source& ()>(Source::create)),
+        sol::base_classes, sol::bases<Base>()
+    );
     // Settings
     source["useBuffer"] = &Source::useBuffer;
     source["queueBuffers"] = &Source::queueBuffers;

@@ -15,7 +15,7 @@ class SSS_AUDIO_API Buffer;
 #pragma warning(disable: 4251)
 #pragma warning(disable: 4275)
 
-class SSS_AUDIO_API Source final {
+class SSS_AUDIO_API Source final : public Base {
     friend _internal::Device;
     friend Buffer;
 
