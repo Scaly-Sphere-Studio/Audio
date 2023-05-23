@@ -28,9 +28,9 @@ inline void lua_setup_Audio(sol::state& lua) try
     buffer["getProperty"] = &Buffer::getProperty;
     buffer["id"] = sol::property(&Buffer::getID);
     // Static functions
-    buffer["get"] = &Buffer::get;
-    buffer["remove"] = &Buffer::remove;
-    buffer["clearAll"] = &Buffer::clearAll;
+    audio["getBuffer"] = &Buffer::get;
+    audio["removeBuffer"] = &Buffer::remove;
+    audio["clearAllBuffers"] = &Buffer::clearAll;
 
     // Source
     auto source = audio.new_usertype<Source>("Source", sol::factories(
@@ -55,9 +55,9 @@ inline void lua_setup_Audio(sol::state& lua) try
     source["loop"] = sol::property(&Source::isLooping, &Source::setLooping);
     source["id"] = sol::property(&Source::getID);
     // Static functions
-    source["get"] = &Source::get;
-    source["remove"] = &Source::remove;
-    source["clearAll"] = &Source::clearAll;
+    audio["getSource"] = &Source::get;
+    audio["removeSource"] = &Source::remove;
+    audio["clearAllSources"] = &Source::clearAll;
 
     // Global properties
     audio["getVolume"] = &getMainVolume;
